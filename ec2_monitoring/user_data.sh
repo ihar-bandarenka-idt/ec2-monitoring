@@ -1,19 +1,23 @@
 #!/bin/bash
+InstanceId=$(ec2-metadata -i |gawk '{ print $2 }')
 wget https://s3.eu-central-1.amazonaws.com/amazoncloudwatch-agent-eu-central-1/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
 rpm -U ./amazon-cloudwatch-agent.rpm
 cat << EOF > /opt/aws/amazon-cloudwatch-agent/bin/config.json
 {
   "agent": {
     "metrics_collection_interval": 60,
-    "run_as_user": "root"
+    "aws_sdk_log_level": "LogDebugWithEventStreamBody"
   },
   "metrics": {
-    "namespace": "Test",
+    "append_dimensions": {
+      "InstanceId": "${InstanceId}"
+    },
+    "namespace": "myspace1",
     "metrics_collected": {
       "cpu": {
-        "resources": [
-          "*"
-        ],
+        "append_dimensions": {
+          "InstanceId": "${InstanceId}"
+        },
         "measurement": [
           {
             "name": "cpu_usage_idle",
@@ -24,8 +28,7 @@ cat << EOF > /opt/aws/amazon-cloudwatch-agent/bin/config.json
             "unit": "Percent"
           }
         ],
-        "totalcpu": true,
-        "metrics_collection_interval": 60
+        "totalcpu": true
       }
     }
   }
